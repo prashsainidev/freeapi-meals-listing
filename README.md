@@ -22,9 +22,11 @@ In my previous Random Users project, I mastered the basic fetch and display. In 
 - **Result:** The app checks the category and maps over the filtered array instead of raw data.
 
 ### 2. Demystifying Messy API Data
-- **Problem:** The API provides 20 separate properties for ingredients instead of an array.
-- **Solution:** Built a helper function using a loop and template literals.
-- **Result:** Dynamically extracted only the top 3 ingredients for the UI preview.
+- **The API Endpoint:** `https://api.freeapi.app/api/v1/public/meals`
+- **The JSON Structure:** The API returns `data.data.data` which is an array of complex meal objects.
+- **The Problem:** The FreeAPI Meals endpoint provides 20 separate properties for ingredients (`strIngredient1`, `strIngredient2`, etc.) instead of a clean array.
+- **The Solution:** Built a helper function using a `for` loop to dynamically check `meal[\`strIngredient\${i}\`]` and push valid strings into a new clean array.
+- **Result:** Dynamically extracted only the top 3 ingredients for the UI preview without crashing the app on empty properties.
 
 ### 3. Breaking Strings into Badges
 - **Problem:** API returned tags as a single comma-separated string.
