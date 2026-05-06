@@ -23,7 +23,7 @@ const FILTER_EMOJIS = {
 
 function App() {
   const [meal, setMeal] = useState([]);
-  const [meta, setMeta] = useState(null);
+  const [meta, setMeta] = useState({ totalItems: 0, totalPages: 1, page: 1 });
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [filterType, setFilterType] = useState('All'); 
@@ -43,10 +43,10 @@ function App() {
       
       setMeal(data.data.data);
       setMeta({
-        totalItems: data.data.totalItems,
-        currentPageItems: data.data.currentPageItems,
-        totalPages: data.data.totalPages,
-        page: data.data.page,
+        totalItems: data.data.totalItems || 0,
+        currentPageItems: data.data.currentPageItems || 0,
+        totalPages: data.data.totalPages || 1,
+        page: data.data.page || 1,
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
@@ -76,8 +76,7 @@ function App() {
   };
 
   const renderPagination = () => {
-    if (!meta || meta.totalPages <= 1) return null;
-    const { totalPages } = meta;
+    const totalPages = Math.max(1, meta.totalPages);
     let startPage = Math.max(1, page - 2);
     let endPage = Math.min(totalPages, page + 2);
     
@@ -88,13 +87,15 @@ function App() {
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
+    
+    if (pages.length === 0) pages.push(1);
 
     return (
       <div className="pagination">
-        <button className="page-btn nav-btn" disabled={page === 1} onClick={() => setPage(1)} title="Go to First Page">
+        <button className="page-btn nav-btn" disabled={page <= 1} onClick={() => setPage(1)} title="Go to First Page">
           &laquo; FIRST
         </button>
-        <button className="page-btn nav-btn" disabled={page === 1} onClick={() => setPage(page - 1)} title="Previous Page">
+        <button className="page-btn nav-btn" disabled={page <= 1} onClick={() => setPage(page - 1)} title="Previous Page">
           &lsaquo; PREV
         </button>
         
@@ -108,10 +109,10 @@ function App() {
         
         {endPage < totalPages && <span className="page-dots">...</span>}
         
-        <button className="page-btn nav-btn" disabled={page === totalPages} onClick={() => setPage(page + 1)} title="Next Page">
+        <button className="page-btn nav-btn" disabled={page >= totalPages} onClick={() => setPage(page + 1)} title="Next Page">
           NEXT &rsaquo;
         </button>
-        <button className="page-btn nav-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)} title="Go to Last Page">
+        <button className="page-btn nav-btn" disabled={page >= totalPages} onClick={() => setPage(totalPages)} title="Go to Last Page">
           LAST &raquo;
         </button>
       </div>
@@ -125,22 +126,20 @@ function App() {
         <h1 className="header-title">Global Meals Directory</h1>
         <p className="header-subtitle">Discover premium culinary experiences from around the globe.</p>
         
-        {!loading && meta && (
-          <div className="stats-dashboard">
-            <div className="stat-box">
-              <span className="stat-value">{meta.totalItems}</span>
-              <span className="stat-label">Total Recipes Found</span>
-            </div>
-            <div className="stat-box">
-              <span className="stat-value">{meal.length}</span>
-              <span className="stat-label">In this view</span>
-            </div>
-            <div className="stat-box">
-              <span className="stat-value">{meta.totalPages > 0 ? meta.page : 0} / {meta.totalPages}</span>
-              <span className="stat-label">Page Info</span>
-            </div>
+        <div className={`stats-dashboard ${loading ? 'dimmed' : ''}`}>
+          <div className="stat-box">
+            <span className="stat-value">{meta.totalItems}</span>
+            <span className="stat-label">Total Recipes</span>
           </div>
-        )}
+          <div className="stat-box">
+            <span className="stat-value">{meal.length}</span>
+            <span className="stat-label">In this view</span>
+          </div>
+          <div className="stat-box">
+            <span className="stat-value">{meta.page} / {meta.totalPages}</span>
+            <span className="stat-label">Page Info</span>
+          </div>
+        </div>
 
         <div className="filter-container">
           {SUB_FILTERS.map((type) => (
@@ -156,63 +155,69 @@ function App() {
       </header>
 
       <div className="container">
-        {loading ? (
-          <div className="loader">Sizzling recipes...</div>
-        ) : meal.length === 0 ? (
-          <div className="no-data-msg">No recipes found for "{filterType}". Try another category.</div>
-        ) : (
-          <>
+        <div className="content-wrapper">
+          {loading && (
+            <div className="loading-overlay">
+              <div className="loader">Sizzling recipes...</div>
+            </div>
+          )}
+          
+          <div className={`grid-wrapper ${loading ? 'dimmed' : ''}`}>
             <div className="top-pagination-wrapper">
               {renderPagination()}
             </div>
 
-            <div className="card-grid">
-              {meal.map((item, index) => {
-                const topIngredients = getTopIngredients(item);
-                
-                return (
-                  <div className="premium-card" key={index}>
-                    <div className="card-image-wrapper">
-                      <img src={item.strMealThumb} alt={item.strMeal} className="card-image" />
-                      <div className="category-badge">{item.strCategory}</div>
-                    </div>
-
-                    <div className="card-content">
-                      <div className="area-label">📍 {item.strArea} Cuisine</div>
-                      <h2 className="meal-title">{item.strMeal}</h2>
-                      
-                      <div className="tags-container">
-                        {item.strTags && item.strTags.split(',').map((tag, i) => (
-                          <span key={i} className="tag-pill">#{tag.trim()}</span>
-                        ))}
+            {meal.length === 0 && !loading ? (
+              <div className="no-data-msg">No recipes found for "{filterType}". Try another category.</div>
+            ) : (
+              <div className="card-grid" style={{ minHeight: '50vh' }}>
+                {meal.map((item, index) => {
+                  const topIngredients = getTopIngredients(item);
+                  
+                  return (
+                    <div className="premium-card" key={index}>
+                      <div className="card-image-wrapper">
+                        <img src={item.strMealThumb} alt={item.strMeal} className="card-image" />
+                        <div className="category-badge">{item.strCategory}</div>
                       </div>
 
-                      <div className="ingredients-preview">
-                        <strong>Key Ingredients:</strong>
-                        <p>{topIngredients.join(', ')}{item.strIngredient4 ? '...' : ''}</p>
-                      </div>
-                    </div>
+                      <div className="card-content">
+                        <div className="area-label">📍 {item.strArea} Cuisine</div>
+                        <h2 className="meal-title">{item.strMeal}</h2>
+                        
+                        <div className="tags-container">
+                          {item.strTags && item.strTags.split(',').map((tag, i) => (
+                            <span key={i} className="tag-pill">#{tag.trim()}</span>
+                          ))}
+                        </div>
 
-                    <div className="card-footer">
-                      <a href={item.strYoutube} target="_blank" rel="noopener noreferrer" className="btn-primary">
-                        ▶ Watch Recipe
-                      </a>
-                      {item.strSource && (
-                        <a href={item.strSource} target="_blank" rel="noopener noreferrer" className="btn-secondary">
-                          Read Article
+                        <div className="ingredients-preview">
+                          <strong>Key Ingredients:</strong>
+                          <p>{topIngredients.join(', ')}{item.strIngredient4 ? '...' : ''}</p>
+                        </div>
+                      </div>
+
+                      <div className="card-footer">
+                        <a href={item.strYoutube} target="_blank" rel="noopener noreferrer" className="btn-primary">
+                          ▶ Watch Recipe
                         </a>
-                      )}
+                        {item.strSource && (
+                          <a href={item.strSource} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                            Read Article
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="bottom-pagination-wrapper">
               {renderPagination()}
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </>
   );
