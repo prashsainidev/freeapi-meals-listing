@@ -8,13 +8,13 @@
 
 That was fine for a beginner. But in 2026, building a generic UI isn't enough. You need to build something that feels like a premium restaurant menu. Something that is interactive and visually stunning.
 
-This is the Global Meals Directory. Built for the MasterJi Web Dev Cohort 2026, using the FreeAPI Meals endpoint.
+**Welcome to Part 2 of my FreeAPI Mastery Series.** This is the Global Meals Directory, built using the FreeAPI Meals endpoint.
 
 Here is exactly how I leveled up from my first API project and built this. Step by step.
 
 ## The Next Level of API Mastery
 
-In my previous Random Users project, I mastered the basic fetch and display. In this project, I tackled advanced data manipulation.
+In **Part 1 (Random Users)**, I mastered how to securely fetch and display an array of data. But real-world data is rarely clean. In this second project, I tackled advanced Javascript data manipulation.
 
 ### 1. The Filter Logic
 - **Goal:** Let users filter meals (e.g., Vegetarian).
